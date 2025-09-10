@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>RPG Turn-Based Game - Corrigido</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&display=swap');
+        body { font-family: 'MedievalSharp', cursive; background: linear-gradient(to bottom, #1a202c, #2d3748); min-height:100vh; color:#e2e8f0; }
+        h1,h2,h3,h4 { font-family: 'Cinzel', serif; }
+        .health-bar { transition: width 0.5s ease-in-out; }
+        .dice { background:#ffffff; border-radius:5px; box-shadow:0 0 10px rgba(255,215,0,0.5); display:flex; justify-content:center; align-items:center; font-weight:bold; }
+        .btn-medieval { background: linear-gradient(to bottom, #8B4513, #6b3409); border:2px solid #5a2d07; color:#f8d568; text-shadow:1px 1px 2px rgba(0,0,0,0.5); transition: all .2s; }
+        .btn-medieval:hover { transform: translateY(-2px); box-shadow:0 4px 8px rgba(0,0,0,.3); }
+        .messages-container { scrollbar-width: thin; scrollbar-color: #8B4513 #2d3748; }
+        .messages-container::-webkit-scrollbar{ width:8px; }
+        .messages-container::-webkit-scrollbar-thumb{ background:#8B4513; border-radius:4px; }
+        .selected { outline: 3px solid rgba(245,158,11,.25); background: rgba(245,158,11,.12) !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+    <audio id="attackSound" src="https://assets.mixkit.co/sfx/preview/mixkit-sword-slash-2784.mp3" preload="auto"></audio>
+    <audio id="critSound" src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-hit-2786.mp3" preload="auto"></audio>
+    <audio id="deathSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-explosion-2759.mp3" preload="auto"></audio>
+    <audio id="levelUpSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
+    <audio id="backgroundMusic" loop src="https://assets.mixkit.co/music/preview/mixkit-medieval-showdown-879.mp3" preload="auto"></audio>
+
+    <h1 class="text-4xl md:text-5xl font-bold mb-6 text-yellow-400 text-center">
+        <i class="fas fa-dragon mr-3"></i>RPG Turn-Based Game<i class="fas fa-shield-alt ml-3"></i>
+    </h1>
+
+    <div id="gameContainer" class="w-full max-w-4xl">
+        <div id="configScreen" class="bg-gray-800 bg-opacity-90 rounded-xl p-6 md:p-8 shadow-2xl">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-yellow-300 text-center">Crie seu Personagem</h2>
+            <div class="mb-6">
+                <label class="block text-lg mb-2 text-yellow-200">Nome do Herói</label>
+                <input type="text" id="heroName" placeholder="Digite o nome do seu personagem" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-yellow-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"/>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-yellow-200">Raça</h3>
+                    <div class="space-y-3" id="raceOptions">
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer race-option" data-race="human"><div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center mr-3"><i class="fas fa-user text-white"></i></div><span>Humano</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer race-option" data-race="elf"><div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center mr-3"><i class="fas fa-leaf text-white"></i></div><span>Elfo</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer race-option" data-race="dwarf"><div class="w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center mr-3"><i class="fas fa-mountain text-white"></i></div><span>Anão</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer race-option" data-race="orc"><div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center mr-3"><i class="fas fa-fist-raised text-white"></i></div><span>Orc</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer race-option" data-race="half-elf"><div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center mr-3"><i class="fas fa-star text-white"></i></div><span>Meio-Elfo</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer race-option" data-race="tiefling"><div class="w-10 h-10 rounded-full bg-red-800 flex items-center justify-center mr-3"><i class="fas fa-fire text-white"></i></div><span>Tiefling</span></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-yellow-200">Classe</h3>
+                    <div class="space-y-3" id="classOptions">
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer class-option" data-class="warrior"><div class="w-10 h-10 rounded-full bg-red-700 flex items-center justify-center mr-3"><i class="fas fa-shield-alt text-white"></i></div><span>Guerreiro</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer class-option" data-class="mage"><div class="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center mr-3"><i class="fas fa-hat-wizard text-white"></i></div><span>Mago</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer class-option" data-class="rogue"><div class="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center mr-3"><i class="fas fa-user-ninja text-white"></i></div><span>Ladrão</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer class-option" data-class="archer"><div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center mr-3"><i class="fas fa-bullseye text-white"></i></div><span>Arqueiro</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer class-option" data-class="paladin"><div class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center mr-3"><i class="fas fa-church text-white"></i></div><span>Paladino</span></div>
+                        <div class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer class-option" data-class="barbarian"><div class="w-10 h-10 rounded-full bg-red-800 flex items-center justify-center mr-3"><i class="fas fa-axe text-white"></i></div><span>Bárbaro</span></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold mb-3 text-yellow-200">Dificuldade</h3>
+                        <select id="difficulty" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-yellow-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"><option value="easy">Fácil</option><option value="medium" selected>Médio</option><option value="hard">Difícil</option></select>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-3 text-yellow-200">Arma Inicial</h3>
+                        <select id="weapon" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-yellow-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                            <option value="sword">Espada Longa (1d8)</option>
+                            <option value="axe">Machado de Batalha (1d10)</option>
+                            <option value="staff">Cajado Arcano (1d6)</option>
+                            <option value="bow">Arco Curto (1d6)</option>
+                            <option value="dagger">Adaga (1d4)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center"><button id="startGameBtn" class="btn-medieval px-8 py-3 rounded-lg text-lg font-bold transition"><i class="fas fa-play mr-2"></i>Iniciar Aventura</button></div>
+        </div>
+
+        <div id="battleScreen" class="hidden bg-gray-800 bg-opacity-90 rounded-xl p-6 md:p-8 shadow-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gray-900 rounded-xl p-5 text-center">
+                    <h3 class="text-xl font-bold mb-2 text-yellow-300" id="playerName">Herói</h3>
+                    <div class="mb-4">
+                        <img id="playerImage" src="https://placehold.co/200x200/3B82F6/FFFFFF?text=H" alt="Ilustração do personagem do jogador" class="rounded-lg mx-auto mb-2">
+                        <div class="text-sm text-gray-400"><span id="playerRaceClass">Raça - Classe</span><div class="mt-1"><span class="text-yellow-400">Nv.</span> <span id="playerLevel">1</span><span class="mx-2">|</span><span class="text-yellow-400">XP:</span> <span id="playerXP">0</span></div></div>
+                    </div>
+                    <div class="mb-3"><div class="flex justify-between text-sm mb-1"><span>Vida</span><span id="playerHealth">20/20</span></div><div class="w-full bg-gray-700 rounded-full h-3"><div id="playerHealthBar" class="health-bar bg-green-600 h-3 rounded-full" style="width:100%"></div></div></div>
+                    <div class="mb-3"><div class="flex justify-between text-sm mb-1"><span>Armadura</span><span id="playerArmor">12</span></div></div>
+                    <div><div class="flex justify-between text-sm mb-1"><span>Dano</span><span id="playerDamage">2d6</span></div></div>
+                </div>
+
+                <div class="flex flex-col justify-center items-center">
+                    <div class="mb-6 text-center">
+                        <h3 class="text-2xl font-bold text-yellow-300 mb-2">Combate</h3>
+                        <div id="battleLog" class="messages-container bg-gray-900 rounded-lg p-4 h-48 overflow-y-auto mb-4 text-sm"><p class="text-yellow-200">O combate está prestes a começar...</p></div>
+                    </div>
+                    <div id="diceResult" class="dice w-16 h-16 mb-6 text-2xl text-gray-800 hidden">20</div>
+                    <div id="battleControls" class="flex flex-wrap justify-center gap-3">
+                        <button id="attackBtn" class="btn-medieval px-4 py-2 rounded-lg"><i class="fas fa-swords mr-2"></i>Atacar</button>
+                        <button id="specialBtn" class="btn-medieval px-4 py-2 rounded-lg"><i class="fas fa-fire mr-2"></i>Ataque Especial</button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-xl p-5 text-center">
+                    <h3 class="text-xl font-bold mb-2 text-red-300" id="enemyName">Inimigo</h3>
+                    <div class="mb-4"><img id="enemyImage" src="https://placehold.co/200x200/EF4444/FFFFFF?text=E" alt="Ilustração do inimigo" class="rounded-lg mx-auto mb-2"><div class="text-sm text-gray-400" id="enemyStats">Vida: 20 | Armadura: 12</div></div>
+                    <div class="mb-3"><div class="flex justify-between text-sm mb-1"><span>Vida</span><span id="enemyHealth">20/20</span></div><div class="w-full bg-gray-700 rounded-full h-3"><div id="enemyHealthBar" class="health-bar bg-red-600 h-3 rounded-full" style="width:100%"></div></div></div>
+                    <div class="mb-3"><div class="flex justify-between text-sm mb-1"><span>Armadura</span><span id="enemyArmor">12</span></div></div>
+                    <div><div class="flex justify-between text-sm mb-1"><span>Dano</span><span id="enemyDamage">1d8</span></div></div>
+                </div>
+            </div>
+            <div class="text-center mt-6"><button id="newGameBtn" class="btn-medieval px-6 py-2 rounded-lg"><i class="fas fa-redo mr-2"></i>Novo Jogo</button></div>
+        </div>
+
+        <div id="resultScreen" class="hidden bg-gray-800 bg-opacity-90 rounded-xl p-8 text-center shadow-2xl">
+            <h2 class="text-3xl font-bold mb-6" id="resultTitle">Resultado</h2>
+            <p class="text-xl mb-2" id="resultMessage">O jogo terminou.</p>
+            <p class="mb-6" id="resultDetails"></p>
+            <div class="flex justify-center gap-4">
+                <button id="playAgainBtn" class="btn-medieval px-6 py-2 rounded-lg"><i class="fas fa-play mr-2"></i>Jogar Novamente</button>
+                <button id="mainMenuBtn" class="btn-medieval px-6 py-2 rounded-lg"><i class="fas fa-home mr-2"></i>Menu Principal</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-4 right-4 flex gap-2">
+        <button id="musicToggle" class="bg-yellow-700 hover:bg-yellow-600 text-white p-2 rounded-full"><i class="fas fa-music"></i></button>
+        <button id="soundToggle" class="bg-yellow-700 hover:bg-yellow-600 text-white p-2 rounded-full"><i class="fas fa-volume-up"></i></button>
+    </div>
+
+    <script>
+        const gameData = {
+            races: {
+                human: { name: "Humano", healthBonus: 0, armorBonus: 0, damageBonus: 0 },
+                elf: { name: "Elfo", healthBonus: -2, armorBonus: 1, damageBonus: 0 },
+                dwarf: { name: "Anão", healthBonus: 3, armorBonus: 2, damageBonus: 0 },
+                orc: { name: "Orc", healthBonus: 4, armorBonus: -1, damageBonus: 1 },
+                'half-elf': { name: "Meio-Elfo", healthBonus: 0, armorBonus: 0, damageBonus: 0 },
+                tiefling: { name: "Tiefling", healthBonus: -1, armorBonus: 0, damageBonus: 2 }
+            },
+            classes: {
+                warrior: { name: "Guerreiro", health: 20, armor: 12, damage: "2d6" },
+                mage: { name: "Mago", health: 12, armor: 8, damage: "1d10" },
+                rogue: { name: "Ladrão", health: 15, armor: 10, damage: "2d4" },
+                archer: { name: "Arqueiro", health: 16, armor: 11, damage: "1d8" },
+                paladin: { name: "Paladino", health: 22, armor: 14, damage: "1d10" },
+                barbarian: { name: "Bárbaro", health: 24, armor: 10, damage: "2d8" }
+            },
+            weapons: {
+                sword: { name: "Espada Longa", damage: "1d8" },
+                axe: { name: "Machado de Batalha", damage: "1d10" },
+                staff: { name: "Cajado Arcano", damage: "1d6" },
+                bow: { name: "Arco Curto", damage: "1d6" },
+                dagger: { name: "Adaga", damage: "1d4" }
+            },
+            enemies: {
+                easy: [
+                    { name: "Goblin", health: 10, armor: 5, damage: "1d4" },
+                    { name: "Esqueleto", health: 12, armor: 3, damage: "2d4" }
+                ],
+                medium: [
+                    { name: "Orc", health: 25, armor: 10, damage: "1d6" },
+                    { name: "Troll", health: 30, armor: 12, damage: "2d8" }
+                ],
+                hard: [
+                    { name: "Dragão Vermelho", health: 50, armor: 15, damage: "2d20" },
+                    { name: "Lich", health: 40, armor: 14, damage: "3d6" }
+                ]
+            }
+        };
+
+        let gameState = {
+            player: null,
+            enemy: null,
+            battleLog: [],
+            playerTurn: true,
+            gameActive: false,
+            soundEnabled: true,
+            musicEnabled: false,
+            specialCooldown: 0
+        };
+
+        // DOM
+        const configScreen = document.getElementById('configScreen');
+        const battleScreen = document.getElementById('battleScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const attackBtn = document.getElementById('attackBtn');
+        const specialBtn = document.getElementById('specialBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const mainMenuBtn = document.getElementById('mainMenuBtn');
+        const battleLogEl = document.getElementById('battleLog');
+        const diceResult = document.getElementById('diceResult');
+        const musicToggle = document.getElementById('musicToggle');
+        const soundToggle = document.getElementById('soundToggle');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const attackSound = document.getElementById('attackSound');
+        const critSound = document.getElementById('critSound');
+        const deathSound = document.getElementById('deathSound');
+        const levelUpSound = document.getElementById('levelUpSound');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            // try to play music only if user allows later; initially keep paused
+            backgroundMusic.volume = 0.3;
+        });
+
+        function setupEventListeners(){
+            document.querySelectorAll('.race-option').forEach(opt => opt.addEventListener('click', () => {
+                document.querySelectorAll('.race-option').forEach(o=>o.classList.remove('selected'));
+                opt.classList.add('selected');
+            }));
+            document.querySelectorAll('.class-option').forEach(opt => opt.addEventListener('click', () => {
+                document.querySelectorAll('.class-option').forEach(o=>o.classList.remove('selected'));
+                opt.classList.add('selected');
+            }));
+
+            startGameBtn.addEventListener('click', startGame);
+            attackBtn.addEventListener('click', playerAttack);
+            specialBtn.addEventListener('click', playerSpecialAttack);
+            newGameBtn.addEventListener('click', resetGame);
+            playAgainBtn.addEventListener('click', resetGame);
+            mainMenuBtn.addEventListener('click', showMainMenu);
+            musicToggle.addEventListener('click', toggleMusic);
+            soundToggle.addEventListener('click', toggleSound);
+        }
+
+        function startGame(){
+            const heroName = document.getElementById('heroName').value.trim();
+            const selectedRace = document.querySelector('.race-option.selected');
+            const selectedClass = document.querySelector('.class-option.selected');
+            const difficulty = document.getElementById('difficulty').value;
+            const weapon = document.getElementById('weapon').value;
+
+            if(!heroName){ alert('Por favor, digite um nome para o seu personagem!'); return; }
+            if(!selectedRace){ alert('Por favor, selecione uma raça!'); return; }
+            if(!selectedClass){ alert('Por favor, selecione uma classe!'); return; }
+
+            const race = selectedRace.getAttribute('data-race');
+            const cls = selectedClass.getAttribute('data-class');
+
+            gameState.player = createPlayer(heroName, race, cls, weapon);
+            gameState.enemy = generateEnemy(difficulty);
+            gameState.specialCooldown = 0;
+            updatePlayerUI();
+            updateEnemyUI();
+
+            configScreen.classList.add('hidden');
+            battleScreen.classList.remove('hidden');
+            gameState.gameActive = true;
+            gameState.playerTurn = true;
+            gameState.battleLog = [];
+            battleLogEl.innerHTML = '';
+            addToBattleLog(`Um ${gameState.player.race} ${gameState.player.class} chamado ${gameState.player.name} entra no calabouço...`);
+            setTimeout(()=>addToBattleLog("Quando de repente, um inimigo aparece em sua frente!"), 1200);
+            setTimeout(()=>addToBattleLog(`Um ${gameState.enemy.name} → Vida: ${gameState.enemy.health}, AC: ${gameState.enemy.armor}, Dano: ${gameState.enemy.damage}`), 2400);
+            setTimeout(()=>addToBattleLog("Hora de lutar!"), 3600);
+            refreshControls();
+        }
+
+        function createPlayer(name, raceKey, classKey, weaponKey){
+            const race = gameData.races[raceKey];
+            const cls = gameData.classes[classKey];
+            const weapon = gameData.weapons[weaponKey];
+            const health = Math.max(1, cls.health + race.healthBonus);
+            const armor = Math.max(0, cls.armor + race.armorBonus);
+            return {
+                name,
+                race: race.name,
+                class: cls.name,
+                level: 1,
+                xp: 0,
+                maxHealth: health,
+                health,
+                armor,
+                baseDamage: cls.damage,
+                damage: weapon.damage,
+                weapon: weapon.name,
+                nextLevelXP: 20
+            };
+        }
+
+        function generateEnemy(difficulty){
+            const list = gameData.enemies[difficulty];
+            const e = list[Math.floor(Math.random()*list.length)];
+            return {
+                name: e.name,
+                maxHealth: e.health,
+                health: e.health,
+                armor: e.armor,
+                damage: e.damage
+            };
+        }
+
+        function updatePlayerUI(){
+            if(!gameState.player) return;
+            document.getElementById('playerName').textContent = gameState.player.name;
+            document.getElementById('playerRaceClass').textContent = `${gameState.player.race} - ${gameState.player.class}`;
+            document.getElementById('playerLevel').textContent = gameState.player.level;
+            document.getElementById('playerXP').textContent = gameState.player.xp;
+            document.getElementById('playerHealth').textContent = `${gameState.player.health}/${gameState.player.maxHealth}`;
+            document.getElementById('playerArmor').textContent = gameState.player.armor;
+            document.getElementById('playerDamage').textContent = `${gameState.player.damage} (${gameState.player.weapon})`;
+            const healthPercent = Math.max(0, (gameState.player.health / gameState.player.maxHealth) * 100);
+            document.getElementById('playerHealthBar').style.width = `${healthPercent}%`;
+            document.getElementById('playerImage').src = `https://placehold.co/200x200/3B82F6/FFFFFF?text=${encodeURIComponent(gameState.player.race.substring(0,1)+gameState.player.class.substring(0,1))}`;
+            document.getElementById('playerImage').alt = `Ilustração de ${gameState.player.race} ${gameState.player.class}`;
+        }
+
+        function updateEnemyUI(){
+            if(!gameState.enemy) return;
+            document.getElementById('enemyName').textContent = gameState.enemy.name;
+            document.getElementById('enemyHealth').textContent = `${gameState.enemy.health}/${gameState.enemy.maxHealth}`;
+            document.getElementById('enemyArmor').textContent = gameState.enemy.armor;
+            document.getElementById('enemyDamage').textContent = gameState.enemy.damage;
+            document.getElementById('enemyStats').textContent = `Vida: ${gameState.enemy.health} | Armadura: ${gameState.enemy.armor}`;
+            const healthPercent = Math.max(0, (gameState.enemy.health / gameState.enemy.maxHealth) * 100);
+            document.getElementById('enemyHealthBar').style.width = `${healthPercent}%`;
+            document.getElementById('enemyImage').src = `https://placehold.co/200x200/EF4444/FFFFFF?text=${encodeURIComponent(gameState.enemy.name.substring(0,2))}`;
+            document.getElementById('enemyImage').alt = `Ilustração de um ${gameState.enemy.name}`;
+        }
+
+        function addToBattleLog(msg, cls=''){
+            const p = document.createElement('p');
+            p.className = cls + ' mb-1';
+            p.textContent = msg;
+            battleLogEl.appendChild(p);
+            battleLogEl.scrollTop = battleLogEl.scrollHeight;
+            gameState.battleLog.push(msg);
+        }
+
+        // Dice parsing like "2d6" or "1d8"
+        function rollDice(diceStr){
+            const m = diceStr.match(/(\d+)d(\d+)/i);
+            if(!m) return Number(diceStr) || 0;
+            const count = parseInt(m[1],10);
+            const sides = parseInt(m[2],10);
+            let total = 0;
+            for(let i=0;i<count;i++){
+                total += Math.floor(Math.random()*sides)+1;
+            }
+            return total;
+        }
+
+        function parseAndRoll(damageStr){
+            // damageStr like "1d8" or "2d6+2" support simple +n
+            const parts = damageStr.split('+').map(s=>s.trim());
+            let total = 0;
+            total += rollDice(parts[0]);
+            if(parts.length>1) total += Number(parts[1]) || 0;
+            return total;
+        }
+
+        function calculateHit(attackerRoll, targetArmor){
+            // simple mechanic: natural 20 = crit, roll+mod vs AC (we'll treat attackerRoll as d20)
+            if(attackerRoll === 20) return {hit:true, crit:true};
+            const attackTotal = attackerRoll;
+            return { hit: attackTotal >= targetArmor, crit:false };
+        }
+
+        function playerAttack(){
+            if(!gameState.gameActive || !gameState.playerTurn) return;
+            disableControls(true);
+            const attackRoll = Math.floor(Math.random()*20)+1;
+            const enemyAC = gameState.enemy.armor;
+            const result = calculateHit(attackRoll, enemyAC);
+            let dmg = 0;
+            if(result.hit){
+                dmg = parseAndRoll(gameState.player.damage);
+                if(result.crit){
+                    dmg = Math.round(dmg * 1.5);
+                    playSound(critSound);
+                    addToBattleLog(`${gameState.player.name} acerta um CRÍTICO! Rolagem: ${attackRoll} → Dano: ${dmg}`);
+                } else {
+                    playSound(attackSound);
+                    addToBattleLog(`${gameState.player.name} ataca (Rolagem ${attackRoll}) e causa ${dmg} de dano.`);
+                }
+                gameState.enemy.health = Math.max(0, gameState.enemy.health - dmg);
+                updateEnemyUI();
+            } else {
+                addToBattleLog(`${gameState.player.name} erra o ataque (Rolagem ${attackRoll}).`);
+            }
+            checkBattleEnd();
+            // reduce cooldown if >0
+            if(gameState.specialCooldown>0) gameState.specialCooldown = Math.max(0, gameState.specialCooldown-1);
+            // enemy turn after a short delay if battle not finished
+            if(gameState.gameActive) setTimeout(()=>enemyTurn(), 800);
+        }
+
+        function playerSpecialAttack(){
+            if(!gameState.gameActive || !gameState.playerTurn) return;
+            if(gameState.specialCooldown > 0){
+                addToBattleLog(`Ataque Especial em cooldown: ${gameState.specialCooldown} turnos restantes.`);
+                return;
+            }
+            disableControls(true);
+            // special: 2x damage but chance to miss is higher (roll d20 need >= (AC-2))
+            const attackRoll = Math.floor(Math.random()*20)+1;
+            const required = Math.max(2, gameState.enemy.armor - 2);
+            const hit = attackRoll >= required || attackRoll === 20;
+            if(hit){
+                let base = parseAndRoll(gameState.player.damage);
+                const dmg = Math.round(base * 2.0);
+                gameState.enemy.health = Math.max(0, gameState.enemy.health - dmg);
+                playSound(critSound);
+                addToBattleLog(`${gameState.player.name} usa ATAQUE ESPECIAL (Rolagem ${attackRoll}) e causa ${dmg} de dano!`);
+                updateEnemyUI();
+            } else {
+                addToBattleLog(`${gameState.player.name} tenta um ATAQUE ESPECIAL e falha (Rolagem ${attackRoll}).`);
+            }
+            gameState.specialCooldown = 3; // 3 turns cooldown
+            checkBattleEnd();
+            if(gameState.gameActive) setTimeout(()=>enemyTurn(), 900);
+        }
+
+        function enemyTurn(){
+            if(!gameState.gameActive) return;
+            // enemy acts
+            const attackRoll = Math.floor(Math.random()*20)+1;
+            const playerAC = gameState.player.armor;
+            const res = calculateHit(attackRoll, playerAC);
+            let dmg = 0;
+            if(res.hit){
+                dmg = parseAndRoll(gameState.enemy.damage);
+                if(res.crit){
+                    dmg = Math.round(dmg * 1.5);
+                    playSound(critSound);
+                    addToBattleLog(`${gameState.enemy.name} acerta um CRÍTICO! Rolagem: ${attackRoll} → Dano: ${dmg}`);
+                } else {
+                    playSound(attackSound);
+                    addToBattleLog(`${gameState.enemy.name} ataca (Rolagem ${attackRoll}) e causa ${dmg} de dano.`);
+                }
+                gameState.player.health = Math.max(0, gameState.player.health - dmg);
+                updatePlayerUI();
+            } else {
+                addToBattleLog(`${gameState.enemy.name} erra o ataque (Rolagem ${attackRoll}).`);
+            }
+            // decrement cooldown for player special: already handled after player action, but ensure min 0
+            gameState.specialCooldown = Math.max(0, gameState.specialCooldown-1);
+            checkBattleEnd();
+            disableControls(false);
+        }
+
+        function checkBattleEnd(){
+            if(gameState.enemy.health <= 0){
+                playSound(deathSound);
+                addToBattleLog(`${gameState.enemy.name} foi derrotado!`);
+                // reward XP depending on enemy strength
+                const xpGain = Math.max(5, Math.floor(gameState.enemy.maxHealth / 2));
+                addToBattleLog(`${gameState.player.name} ganha ${xpGain} XP.`);
+                gameState.player.xp += xpGain;
+                levelUpIfNeeded();
+                updatePlayerUI();
+                showResult(true, `${gameState.player.name} venceu!`);
+                gameState.gameActive = false;
+                return;
+            }
+            if(gameState.player.health <= 0){
+                playSound(deathSound);
+                addToBattleLog(`${gameState.player.name} foi derrotado...`);
+                showResult(false, `${gameState.player.name} caiu em batalha.`);
+                gameState.gameActive = false;
+                return;
+            }
+        }
+
+        function levelUpIfNeeded(){
+            if(gameState.player.xp >= gameState.player.nextLevelXP){
+                gameState.player.level += 1;
+                gameState.player.xp = gameState.player.xp - gameState.player.nextLevelXP;
+                gameState.player.nextLevelXP = Math.round(gameState.player.nextLevelXP * 1.6);
+                // increase stats
+                gameState.player.maxHealth += 4;
+                gameState.player.health = gameState.player.maxHealth;
+                playSound(levelUpSound);
+                addToBattleLog(`${gameState.player.name} subiu para o nível ${gameState.player.level}! Vida restaurada.`);
+            }
+        }
+
+        function showResult(victory, message){
+            document.getElementById('resultTitle').textContent = victory ? 'Vitória!' : 'Derrota';
+            document.getElementById('resultMessage').textContent = message;
+            document.getElementById('resultDetails').textContent = victory ? `Você recebeu loot e ${gameState.player.xp} XP.` : 'Tente novamente e melhore seu equipamento.';
+            battleScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        }
+
+        function resetGame(){
+            // restart to config
+            resultScreen.classList.add('hidden');
+            battleScreen.classList.add('hidden');
+            configScreen.classList.remove('hidden');
+            // reset state
+            gameState = { player:null, enemy:null, battleLog:[], playerTurn:true, gameActive:false, soundEnabled:gameState.soundEnabled, musicEnabled:gameState.musicEnabled, specialCooldown:0 };
+            battleLogEl.innerHTML = '';
+            // unselect options
+            document.querySelectorAll('.race-option, .class-option').forEach(o=>o.classList.remove('selected'));
+            document.getElementById('heroName').value = '';
+            refreshControls();
+        }
+
+        function showMainMenu(){
+            resultScreen.classList.add('hidden');
+            battleScreen.classList.add('hidden');
+            configScreen.classList.remove('hidden');
+        }
+
+        function disableControls(disabled){
+            attackBtn.disabled = disabled;
+            specialBtn.disabled = disabled;
+            if(disabled){
+                attackBtn.classList.add('opacity-50','cursor-not-allowed');
+                specialBtn.classList.add('opacity-50','cursor-not-allowed');
+            } else {
+                attackBtn.classList.remove('opacity-50','cursor-not-allowed');
+                specialBtn.classList.remove('opacity-50','cursor-not-allowed');
+            }
+            refreshControls();
+        }
+
+        function refreshControls(){
+            // update special button text with cooldown
+            if(gameState.specialCooldown > 0){
+                specialBtn.textContent = `Ataque Especial (${gameState.specialCooldown})`;
+                specialBtn.disabled = true;
+                specialBtn.classList.add('opacity-50','cursor-not-allowed');
+            } else {
+                specialBtn.innerHTML = '<i class="fas fa-fire mr-2"></i>Ataque Especial';
+                specialBtn.disabled = false;
+                specialBtn.classList.remove('opacity-50','cursor-not-allowed');
+            }
+        }
+
+        function toggleMusic(){
+            gameState.musicEnabled = !gameState.musicEnabled;
+            if(gameState.musicEnabled){
+                backgroundMusic.play().catch(()=>{});
+                musicToggle.classList.add('bg-green-600');
+            } else {
+                backgroundMusic.pause();
+                musicToggle.classList.remove('bg-green-600');
+            }
+        }
+
+        function toggleSound(){
+            gameState.soundEnabled = !gameState.soundEnabled;
+            if(gameState.soundEnabled){
+                soundToggle.classList.add('bg-green-600');
+            } else {
+                soundToggle.classList.remove('bg-green-600');
+            }
+        }
+
+        function playSound(el){
+            try{
+                if(!gameState.soundEnabled || !el) return;
+                el.currentTime = 0;
+                el.play().catch(()=>{});
+            }catch(e){}
+        }
+
+    </script>
+</body>
+</html>
