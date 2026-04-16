@@ -36,14 +36,10 @@ Este projeto foi desenvolvido com foco em conceitos fundamentais de programaçã
 - Módulo `random` (geração de números aleatórios)  
 - Módulo `time` (controle de tempo e delays)  
 
+
+
+
 ---
-
-## ▶️ Como executar o projeto
-
-1. Clone o repositório:
-```bash
-git clone https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python.git
-```md
 
 ## 🖼️ Imagens do jogo
 
@@ -72,3 +68,12 @@ A versão web traz uma interface mais interativa e visual para o jogo, com eleme
 <p align="center">
   <img src="https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python/raw/main/imagens/imagem5.png" width="500"/>
 </p>
+
+
+---
+
+## ▶️ Como executar o projeto
+
+1. Clone o repositório:
+```bash
+git clone https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python.git 
