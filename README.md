@@ -43,3 +43,32 @@ Este projeto foi desenvolvido com foco em conceitos fundamentais de programaçã
 1. Clone o repositório:
 ```bash
 git clone https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python.git
+
+
+## 🖼️ Imagens do jogo
+
+### 🎮 Execução no terminal (Python)
+
+<p align="center">
+  <img src="https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python/raw/main/imagens/imagem1.png" width="500"/>
+</p>
+
+<p align="center">
+  <img src="https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python/raw/main/imagens/imagem3.png" width="500"/>
+</p>
+
+---
+
+## 🌐 Versão Web (HTML, CSS e JavaScript)
+
+A versão web traz uma interface mais interativa e visual para o jogo, com elementos gráficos e melhorias na experiência do usuário.
+
+### ✨ Interface do jogo
+
+<p align="center">
+  <img src="https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python/raw/main/imagens/imagem4.png" width="500"/>
+</p>
+
+<p align="center">
+  <img src="https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python/raw/main/imagens/imagem5.png" width="500"/>
+</p>
