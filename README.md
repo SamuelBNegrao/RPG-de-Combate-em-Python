@@ -43,7 +43,7 @@ Este projeto foi desenvolvido com foco em conceitos fundamentais de programaçã
 1. Clone o repositório:
 ```bash
 git clone https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python.git
-
+```md
 
 ## 🖼️ Imagens do jogo
 
