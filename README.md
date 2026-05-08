@@ -68,7 +68,13 @@ A versão web traz uma interface mais interativa e visual para o jogo, com eleme
   <img src="https://github.com/SamuelBNegrao/RPG-de-Combate-em-Python/raw/main/imagens/imagem5.png" width="500"/>
 </p>
 
+---
 
+## 🌍 Acesse a versão online
+
+Você pode jogar diretamente pelo navegador através do GitHub Pages:
+
+🔗 https://samuelbnegrao.github.io/RPG-de-Combate-em-Python/
 ---
 
 ## ▶️ Como executar o projeto
