@@ -25,7 +25,6 @@ Este projeto foi desenvolvido com foco em conceitos fundamentais de programaçã
   - Herança
   - Polimorfismo
 - Estrutura de classes e objetos
-- Lógica de controle de fluxo
 - Simulação com aleatoriedade
 
 ---
